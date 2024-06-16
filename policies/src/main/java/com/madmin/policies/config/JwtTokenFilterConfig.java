@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 public class JwtTokenFilterConfig {
 
     @Bean
-    public JwtTokenFilter jwtTokenFilter(AuthenticationService authService, UserDetailsService userService, JwtTokenProvider tokenProvider, @Lazy AuthenticationManager authenticationManager) {
-        return new JwtTokenFilter(tokenProvider, userService, authenticationManager);
+    public JwtTokenFilter jwtTokenFilter(AuthenticationService authService, UserDetailsService userService, JwtTokenProvider tokenProvider) {
+        return new JwtTokenFilter(tokenProvider, userService);
     }
 }

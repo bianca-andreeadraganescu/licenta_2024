@@ -1,14 +1,12 @@
-package com.madmin.policies.object;
+package com.example.demo.appuser;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.util.Objects;
 
 @Entity
 @Table(name = "app_user")
-public class User {
-
+public class AppUser {
     @Id
     private String username;
     private String password;

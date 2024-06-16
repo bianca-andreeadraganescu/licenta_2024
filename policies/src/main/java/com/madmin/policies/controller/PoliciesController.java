@@ -4,6 +4,7 @@ package com.madmin.policies.controller;
 import com.madmin.policies.object.FirewallPolicy;
 import com.madmin.policies.services.FirewallPolicyService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

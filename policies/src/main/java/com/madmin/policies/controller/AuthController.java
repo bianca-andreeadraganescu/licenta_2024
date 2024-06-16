@@ -1,53 +1,53 @@
 package com.madmin.policies.controller;
 
-//import com.madmin.policies.object.User;
-//import com.madmin.policies.repository.UserRepository;
-//import com.madmin.policies.utils.JwtUtil;
+import com.madmin.policies.object.User;
+import com.madmin.policies.repository.UserRepository;
+import com.madmin.policies.utils.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
-//@RestController
-//@RequestMapping("/api/auth")
-//public class AuthController {
-//    private final UserRepository userRepository;
-//    private final PasswordEncoder passwordEncoder;
-//    private final JwtUtil jwtUtil;
-//    private static final String SECRET_KEY = "TbbxPCD+cas1tMNaEi8x7N/q7RbhFC3ckcS+ZLxKJtYpVJFwn5/dOtjTJ1s+NDL0";
-//
-//
-//    @Autowired
-//    public AuthController(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
-//        this.userRepository = userRepository;
-//        this.passwordEncoder = passwordEncoder;
-//        this.jwtUtil = jwtUtil;
-//    }
-//
-//    @PostMapping("/login")
-//    public ResponseEntity<String> login(@RequestParam String username, @RequestParam String password, HttpServletRequest request) {
-//        Optional<User> userOptional = userRepository.findById(username);
-//        if (userOptional.isPresent() && passwordEncoder.matches(password, userOptional.get().getPassword())) {
-//            User user = userOptional.get();
-//            String ipAddress = request.getRemoteAddr();
-//
-//            // Verifică dacă adresa IP este diferită de cea stocată
-//            if (!ipAddress.equals(user.getIpAddress())) {
-//                user.setIpAddress(ipAddress);
-//                userRepository.save(user);
-//            }
-//
-//            String token = jwtUtil.generateToken(user);
-//            return ResponseEntity.ok(token);
-//        } else {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
-//        }
-//    }
-//}
+@RestController
+@RequestMapping("/api/auth")
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserDetailsService userDetailsService;
+
+    @Autowired
+    public AuthController(AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider, UserDetailsService userDetailsService) {
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userDetailsService = userDetailsService;
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody Map<String, String> loginRequest) {
+        String username = loginRequest.get("username");
+        String password = loginRequest.get("password");
+
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+        );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String token = jwtTokenProvider.createToken(username, userDetails.getAuthorities().stream()
+                .map(grantedAuthority -> grantedAuthority.getAuthority())
+                .collect(Collectors.toList()));
+
+        return ResponseEntity.ok(Collections.singletonMap("token", token));
+    }
+}

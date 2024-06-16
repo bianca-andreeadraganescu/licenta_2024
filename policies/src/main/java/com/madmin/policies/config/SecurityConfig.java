@@ -37,14 +37,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .csrf().disable()
                 .authorizeRequests()
-                .antMatchers(HttpMethod.POST, "/api/policies").permitAll() // Permite accesul la endpoint-ul POST
-                .antMatchers(HttpMethod.GET, "/api/policies/**").permitAll() // Permite accesul la endpoint-urile GET
-                .anyRequest().authenticated();
+                .antMatchers(HttpMethod.POST, "/api/policies").permitAll()
+                .antMatchers(HttpMethod.GET, "/api/policies/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
+                .addFilterBefore(jwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
-    public JwtTokenFilter jwtTokenFilter() throws Exception {
-        return new JwtTokenFilter(jwtTokenProvider, userDetailsService, authenticationManagerBean());
+    public JwtTokenFilter jwtTokenFilter() {
+        return new JwtTokenFilter(jwtTokenProvider, userDetailsService);
     }
 
     @Bean
