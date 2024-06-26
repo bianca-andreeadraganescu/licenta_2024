@@ -1,8 +1,9 @@
 package com.example.demo.appuser;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import com.example.demo.util.UserRole;
+
+import javax.persistence.*;
+import java.util.Set;
 
 @Entity
 @Table(name = "app_user")
@@ -11,8 +12,7 @@ public class AppUser {
     private String username;
     private String password;
     private String ipAddress;
-
-    // Getters and setters
+    private AppUserRole role;
 
     public String getUsername() {
         return username;
@@ -36,5 +36,13 @@ public class AppUser {
 
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }
+
+    public AppUserRole getRole() {
+        return role;
+    }
+
+    public void setRole(AppUserRole role) {
+        this.role = role;
     }
 }

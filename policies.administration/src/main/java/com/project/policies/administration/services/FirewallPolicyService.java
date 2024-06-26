@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,5 +39,26 @@ public class FirewallPolicyService {
                     return (FirewallPolicy) policy;
                 })
                 .collect(Collectors.toList());
+    }
+    public void savePolicy(FirewallPolicy policy) {
+        redisTemplate.opsForHash().put("FIREWALL_POLICIES", policy.getId(), policy);
+    }
+
+    public Optional<FirewallPolicy> getDefaultPolicy() {
+        return getAllPolicies().stream()
+                .filter(policy -> "DEFAULT".equalsIgnoreCase(policy.getType()) && policy.isActive())
+                .findFirst();
+    }
+
+    public Optional<FirewallPolicy> getPolicyForUser(String username, String type) {
+        return getAllPolicies().stream()
+                .filter(policy -> policy.isActive() && type.equalsIgnoreCase(policy.getType()))
+                .findFirst();
+    }
+
+    public Optional<FirewallPolicy> getActivePolicyForUser(String username) {
+        return getAllPolicies().stream()
+                .filter(policy -> policy.isActive() && policy.getRules().get("username").equals(username))
+                .findFirst();
     }
 }

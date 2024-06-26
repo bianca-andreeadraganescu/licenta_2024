@@ -1,9 +1,11 @@
 package com.example.demo.appuser;
 
 import com.example.demo.util.JwtTokenProvider;
+import com.example.demo.util.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,11 +14,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
 public class AppUserController {
-
     @Autowired
     private AppUserRepository userRepository;
 
@@ -37,7 +40,7 @@ public class AppUserController {
                 userRepository.save(user);
             }
 
-            String token = generateToken(user);
+            String token = jwtTokenProvider.createToken(username, user.getRole());
             return ResponseEntity.ok(token);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials");
@@ -45,7 +48,7 @@ public class AppUserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestParam String username, @RequestParam String password) {
+    public ResponseEntity<String> register(@RequestParam String username, @RequestParam String password, @RequestParam AppUserRole role) {
         if (userRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Username already exists");
         }
@@ -53,12 +56,8 @@ public class AppUserController {
         AppUser user = new AppUser();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
+        user.setRole(role);
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
-    }
-
-    private String generateToken(AppUser user) {
-        // Logic for generating token (e.g., JWT)
-        return "token_" + user.getUsername();
     }
 }

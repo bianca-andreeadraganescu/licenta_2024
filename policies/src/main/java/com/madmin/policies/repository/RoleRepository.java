@@ -46,13 +46,13 @@ public class RoleRepository {
         return hashOperations.get(HASH_KEY, String.valueOf(id));
     }
 
-    public Role findByName(String name) {
-        return hashOperations.values(HASH_KEY)
-                .stream()
-                .filter(role -> role.getName().equals(name))
-                .findFirst()
-                .orElse(null);
-    }
+//    public Role findByName(String name) {
+//        return hashOperations.values(HASH_KEY)
+//                .stream()
+//                .filter(role -> role.getName().equals(name))
+//                .findFirst()
+//                .orElse(null);
+//    }
 
     public void deleteById(Long id) {
         hashOperations.delete(HASH_KEY, String.valueOf(id));

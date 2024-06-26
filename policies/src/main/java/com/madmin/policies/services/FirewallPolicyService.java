@@ -3,7 +3,7 @@ package com.madmin.policies.services;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.madmin.policies.object.FirewallPolicy;
 import com.madmin.policies.object.User;
-import com.madmin.policies.repository.UserRepository;
+import com.madmin.policies.repository.AppUserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -17,10 +17,12 @@ import java.util.stream.Collectors;
 @Service
 public class FirewallPolicyService {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AppUserRepository appUserRepository;
 
     @Autowired
-    public FirewallPolicyService(@Qualifier("template_lab") RedisTemplate<String, Object> redisTemplate) {
+    public FirewallPolicyService(@Qualifier("template_lab") RedisTemplate<String, Object> redisTemplate, AppUserRepository appUserRepository) {
         this.redisTemplate = redisTemplate;
+        this.appUserRepository = appUserRepository;
     }
 
     public void savePolicy(FirewallPolicy policy) {
@@ -51,4 +53,22 @@ public class FirewallPolicyService {
                 })
                 .collect(Collectors.toList());
     }
+
+//    public void assignPolicyToUser(String username, String policyId) {
+//        Optional<User> userOptional = appUserRepository.findByUsername(username);
+//        if (userOptional.isPresent()) {
+//            User user = userOptional.get();
+//            user.setPolicyId(policyId);
+//            appUserRepository.save(user);
+//        }
+//    }
+//
+//    public FirewallPolicy getPolicyForUser(String username) {
+//        Optional<User> userOptional = appUserRepository.findByUsername(username);
+//        if (userOptional.isPresent()) {
+//            String policyId = userOptional.get().getPolicyId();
+//            return getPolicy(policyId);
+//        }
+//        return null;
+//    }
 }

@@ -1,5 +1,7 @@
 package com.project.policies.administration.object;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.policies.administration.utils.Type;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,5 +29,14 @@ public class FirewallPolicy implements Serializable {
 
     // Constructor default necesar pentru JPA
     public FirewallPolicy() {
+    }
+
+    public String calculateChecksum() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return Integer.toString(objectMapper.writeValueAsString(this).hashCode());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to calculate checksum", e);
+        }
     }
 }

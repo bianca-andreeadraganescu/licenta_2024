@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.madmin.policies.object.Role;
-//import com.madmin.policies.object.User;
 import com.madmin.policies.object.User;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -15,7 +14,6 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 
@@ -43,6 +41,7 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
     @Bean(name = "template_user")
     public RedisTemplate<String, User> redisTemplateUser() {
         RedisTemplate<String, User> template = new RedisTemplate<>();
@@ -55,6 +54,7 @@ public class RedisConfig {
         template.afterPropertiesSet();
         return template;
     }
+
     @Primary
     @Bean(name = "template_lab")
     public RedisTemplate<String, Object> redisTemplateLab() {
