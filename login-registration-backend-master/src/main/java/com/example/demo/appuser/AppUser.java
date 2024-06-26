@@ -3,15 +3,20 @@ package com.example.demo.appuser;
 import com.example.demo.util.UserRole;
 
 import javax.persistence.*;
+import java.util.List;
 import java.util.Set;
 
 @Entity
-@Table(name = "app_user")
+@Table(name = "app_user", indexes = {
+        @Index(name = "idx_username", columnList = "username")
+})
 public class AppUser {
     @Id
     private String username;
     private String password;
     private String ipAddress;
+    @ElementCollection
+    private List<String> allowedIpAddresses;
     private AppUserRole role;
 
     public String getUsername() {
@@ -36,6 +41,14 @@ public class AppUser {
 
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }
+
+    public List<String> getAllowedIpAddresses() {
+        return allowedIpAddresses;
+    }
+
+    public void setAllowedIpAddresses(List<String> allowedIpAddresses) {
+        this.allowedIpAddresses = allowedIpAddresses;
     }
 
     public AppUserRole getRole() {

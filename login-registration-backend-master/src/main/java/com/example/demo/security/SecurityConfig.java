@@ -1,5 +1,6 @@
 package com.example.demo.security;
 
+//import com.example.demo.util.IpAddressFilter;
 import com.example.demo.util.JwtTokenFilter;
 import com.example.demo.util.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
+
+//    @Autowired
+//    private IpAddressFilter ipAddressFilter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {

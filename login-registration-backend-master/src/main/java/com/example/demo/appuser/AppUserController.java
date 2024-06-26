@@ -3,6 +3,7 @@ package com.example.demo.appuser;
 import com.example.demo.util.JwtTokenProvider;
 import com.example.demo.util.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -29,17 +32,27 @@ public class AppUserController {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    private final List<String> allowedIps;
+
+    @Autowired
+    public AppUserController(@Value("${security.allowed-ips}") String allowedIps) {
+        this.allowedIps = Arrays.asList(allowedIps.split(","));
+    }
+
+    private boolean isIpAllowed(String ipAddress) {
+        return allowedIps.contains(ipAddress);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestParam String username, @RequestParam String password, HttpServletRequest request) {
+        String remoteAddr = request.getRemoteAddr();
+        if (!isIpAllowed(remoteAddr)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied from IP: " + remoteAddr);
+        }
+
         Optional<AppUser> userOptional = userRepository.findByUsername(username);
         if (userOptional.isPresent() && passwordEncoder.matches(password, userOptional.get().getPassword())) {
             AppUser user = userOptional.get();
-            String ipAddress = request.getRemoteAddr();
-            if (!ipAddress.equals(user.getIpAddress())) {
-                user.setIpAddress(ipAddress);
-                userRepository.save(user);
-            }
-
             String token = jwtTokenProvider.createToken(username, user.getRole());
             return ResponseEntity.ok(token);
         } else {
