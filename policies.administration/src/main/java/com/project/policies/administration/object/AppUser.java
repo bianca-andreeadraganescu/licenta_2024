@@ -12,8 +12,8 @@ public class AppUser {
     private String username;
     private String password;
     private String ipAddress;
-    
-    @ManyToOne
-    @JoinColumn(name = "firewall_policy_id")
+    private String role;
+
+    @Transient
     private FirewallPolicy firewallPolicy;
 }

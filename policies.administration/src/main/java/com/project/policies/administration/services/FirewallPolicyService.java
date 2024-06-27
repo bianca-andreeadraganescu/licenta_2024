@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 @Service
 public class FirewallPolicyService {
     private final RedisTemplate<String, Object> redisTemplate;
-
+    @Autowired
+    private ObjectMapper objectMapper;
     @Autowired
     public FirewallPolicyService(@Qualifier("template_lab")RedisTemplate<String, Object> redisTemplate) {
         this.redisTemplate = redisTemplate;
@@ -49,16 +50,18 @@ public class FirewallPolicyService {
                 .filter(policy -> "DEFAULT".equalsIgnoreCase(policy.getType()) && policy.isActive())
                 .findFirst();
     }
-
-    public Optional<FirewallPolicy> getPolicyForUser(String username, String type) {
-        return getAllPolicies().stream()
-                .filter(policy -> policy.isActive() && type.equalsIgnoreCase(policy.getType()))
-                .findFirst();
+    public FirewallPolicy getPolicyForUser(String userId, String category) {
+        Object policyObject = redisTemplate.opsForHash().get(category, userId);
+        return objectMapper.convertValue(policyObject, FirewallPolicy.class);
     }
 
-    public Optional<FirewallPolicy> getActivePolicyForUser(String username) {
-        return getAllPolicies().stream()
-                .filter(policy -> policy.isActive() && policy.getRules().get("username").equals(username))
-                .findFirst();
+    public FirewallPolicy getDefaultPolicyForStation(String ip, String category) {
+        Object policyObject = redisTemplate.opsForHash().get(category, ip);
+        return objectMapper.convertValue(policyObject, FirewallPolicy.class);
+    }
+
+    public FirewallPolicy getGeneralDefaultPolicy() {
+        Object policyObject = redisTemplate.opsForHash().get("DEFAULT_POLICIES", "GENERAL_DEFAULT");
+        return objectMapper.convertValue(policyObject, FirewallPolicy.class);
     }
 }

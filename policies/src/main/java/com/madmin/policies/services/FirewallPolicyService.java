@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
@@ -26,20 +27,28 @@ public class FirewallPolicyService {
     }
 
     public void savePolicy(FirewallPolicy policy) {
-        redisTemplate.opsForHash().put("FIREWALL_POLICIES", policy.getId(), policy);
+        String categoryKey = getCategoryKey(policy.getType());
+        redisTemplate.opsForHash().put(categoryKey, policy.getId(), policy);
     }
 
     public FirewallPolicy getPolicy(String id) {
-        Object policy = redisTemplate.opsForHash().get("FIREWALL_POLICIES", id);
-        if (policy instanceof LinkedHashMap) {
-            ObjectMapper mapper = new ObjectMapper();
-            return mapper.convertValue(policy, FirewallPolicy.class);
+        // It is necessary to retrieve the policy from all categories
+        for (String categoryKey : getAllCategoryKeys()) {
+            FirewallPolicy policy = (FirewallPolicy) redisTemplate.opsForHash().get(categoryKey, id);
+            if (policy != null) {
+                return policy;
+            }
         }
-        return (FirewallPolicy) policy;
+        return null;
     }
 
     public void deletePolicy(String id) {
-        redisTemplate.opsForHash().delete("FIREWALL_POLICIES", id);
+        for (String categoryKey : getAllCategoryKeys()) {
+            if (redisTemplate.opsForHash().hasKey(categoryKey, id)) {
+                redisTemplate.opsForHash().delete(categoryKey, id);
+                return;
+            }
+        }
     }
 
     public List<FirewallPolicy> getAllPolicies() {
@@ -54,21 +63,19 @@ public class FirewallPolicyService {
                 .collect(Collectors.toList());
     }
 
-//    public void assignPolicyToUser(String username, String policyId) {
-//        Optional<User> userOptional = appUserRepository.findByUsername(username);
-//        if (userOptional.isPresent()) {
-//            User user = userOptional.get();
-//            user.setPolicyId(policyId);
-//            appUserRepository.save(user);
-//        }
-//    }
-//
-//    public FirewallPolicy getPolicyForUser(String username) {
-//        Optional<User> userOptional = appUserRepository.findByUsername(username);
-//        if (userOptional.isPresent()) {
-//            String policyId = userOptional.get().getPolicyId();
-//            return getPolicy(policyId);
-//        }
-//        return null;
-//    }
+    private String getCategoryKey(String type) {
+        switch (type) {
+            case "LAB":
+                return "LAB_POLICIES";
+            case "EXAM":
+                return "EXAM_POLICIES";
+            case "DEV":
+                return "DEV_POLICIES";
+            default:
+                return "DEFAULT_POLICIES";
+        }
+    }
+    private List<String> getAllCategoryKeys() {
+        return Arrays.asList("LAB_POLICIES", "EXAM_POLICIES", "DEV_POLICIES", "DEFAULT_POLICIES");
+    }
 }

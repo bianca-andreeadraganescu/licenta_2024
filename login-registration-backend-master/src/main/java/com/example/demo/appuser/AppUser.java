@@ -17,6 +17,7 @@ public class AppUser {
     private String ipAddress;
     @ElementCollection
     private List<String> allowedIpAddresses;
+    @Enumerated(EnumType.STRING)
     private AppUserRole role;
 
     public String getUsername() {

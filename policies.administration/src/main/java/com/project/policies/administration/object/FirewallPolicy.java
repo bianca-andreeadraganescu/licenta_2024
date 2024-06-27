@@ -9,12 +9,10 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
@@ -31,12 +29,4 @@ public class FirewallPolicy implements Serializable {
     public FirewallPolicy() {
     }
 
-    public String calculateChecksum() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return Integer.toString(objectMapper.writeValueAsString(this).hashCode());
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to calculate checksum", e);
-        }
-    }
 }

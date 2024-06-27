@@ -32,7 +32,7 @@ public class RedisConfig {
     @Bean(name = "template_role")
     public RedisTemplate<String, Role> redisTemplateRole() {
         RedisTemplate<String, Role> template = new RedisTemplate<>();
-        template.setConnectionFactory(createConnectionFactory()); // Change the database index if needed
+        template.setConnectionFactory(createConnectionFactory());
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
         Jackson2JsonRedisSerializer<Role> serializer = new Jackson2JsonRedisSerializer<>(Role.class);

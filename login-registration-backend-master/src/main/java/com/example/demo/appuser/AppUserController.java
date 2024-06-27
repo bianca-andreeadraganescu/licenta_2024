@@ -1,5 +1,6 @@
 package com.example.demo.appuser;
 
+import com.example.demo.util.AllowedIpService;
 import com.example.demo.util.JwtTokenProvider;
 import com.example.demo.util.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,27 +33,23 @@ public class AppUserController {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    private final List<String> allowedIps;
-
     @Autowired
-    public AppUserController(@Value("${security.allowed-ips}") String allowedIps) {
-        this.allowedIps = Arrays.asList(allowedIps.split(","));
-    }
-
-    private boolean isIpAllowed(String ipAddress) {
-        return allowedIps.contains(ipAddress);
-    }
+    private AllowedIpService allowedIpService;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestParam String username, @RequestParam String password, HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
-        if (!isIpAllowed(remoteAddr)) {
+        if (!allowedIpService.isIpAllowed(remoteAddr)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied from IP: " + remoteAddr);
         }
 
         Optional<AppUser> userOptional = userRepository.findByUsername(username);
         if (userOptional.isPresent() && passwordEncoder.matches(password, userOptional.get().getPassword())) {
             AppUser user = userOptional.get();
+            // Setarea adresei IP dacă este validă
+            user.setIpAddress(remoteAddr);
+            userRepository.save(user);
+
             String token = jwtTokenProvider.createToken(username, user.getRole());
             return ResponseEntity.ok(token);
         } else {
