@@ -15,6 +15,7 @@ public class AllowedIpService {
         // Adăugăm aici adresele IP permise manual sau le putem încărca dintr-un fișier de configurare
         allowedIps.add("192.168.0.1");
         allowedIps.add("192.168.0.2");
+        allowedIps.add("127.0.0.1");
         allowedIps.add("0:0:0:0:0:0:0:1");
     }
 

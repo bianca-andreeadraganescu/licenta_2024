@@ -1,6 +1,7 @@
 package com.example.demo.appuser;
 
 import com.example.demo.util.AllowedIpService;
+import com.example.demo.util.IPv6ToIPv4Converter;
 import com.example.demo.util.JwtTokenProvider;
 import com.example.demo.util.UserRole;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,7 @@ public class AppUserController {
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestParam String username, @RequestParam String password, HttpServletRequest request) {
         String remoteAddr = request.getRemoteAddr();
+//        remoteAddr = IPv6ToIPv4Converter.convertIPv6ToIPv4(remoteAddr);
         if (!allowedIpService.isIpAllowed(remoteAddr)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied from IP: " + remoteAddr);
         }
@@ -69,5 +71,12 @@ public class AppUserController {
         user.setRole(role);
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
+    }
+
+    @PostMapping("/agent-login")
+    public ResponseEntity<String> agentLogin(@RequestParam String ip) {
+        // Autentificarea agentului pe baza IP-ului
+        String token = jwtTokenProvider.createToken(ip, AppUserRole.AGENT);
+        return ResponseEntity.ok(token);
     }
 }

@@ -44,7 +44,8 @@ public class PoliciesController {
             if ("ADMIN".equals(role)) {
                 FirewallPolicy existingPolicy = policyService.getPolicy(id);
                 if (existingPolicy != null) {
-                    policyService.savePolicy(policy);
+                    updateExistingPolicy(existingPolicy, policy);
+                    policyService.savePolicy(existingPolicy);
                     return ResponseEntity.ok("Policy updated successfully");
                 } else {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Policy not found");
@@ -52,6 +53,18 @@ public class PoliciesController {
             }
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+    }
+    private void updateExistingPolicy(FirewallPolicy existingPolicy, FirewallPolicy newPolicy) {
+        existingPolicy.setType(newPolicy.getType());
+        existingPolicy.setName(newPolicy.getName());
+        existingPolicy.setT_start(newPolicy.getT_start());
+        existingPolicy.setT_stop(newPolicy.getT_stop());
+        existingPolicy.setUsb(newPolicy.getUsb());
+        existingPolicy.setFw(newPolicy.getFw());
+        existingPolicy.setApps(newPolicy.getApps());
+        existingPolicy.setTarget_type(newPolicy.getTarget_type());
+        existingPolicy.setTarget_name(newPolicy.getTarget_name());
+        existingPolicy.setActive(newPolicy.isActive());
     }
 
     @DeleteMapping("/{id}")

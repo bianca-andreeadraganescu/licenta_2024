@@ -1,36 +1,40 @@
 package com.project.policies.administration.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.policies.administration.object.FirewallPolicy;
 import com.project.policies.administration.services.FirewallPolicyService;
 import com.project.policies.administration.services.UserService;
+import com.project.policies.administration.utils.JwtTokenProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api/delivery")
+@RequestMapping("/api/policies")
 public class PoliciesController {
     private final FirewallPolicyService policyService;
     private final UserService userService;
-
+    private final JwtTokenProvider jwtTokenProvider;
+    private static final Logger logger = LoggerFactory.getLogger(PoliciesController.class);
     @Autowired
-    public PoliciesController(FirewallPolicyService policyService, UserService userService) {
+    public PoliciesController(FirewallPolicyService policyService, UserService userService, JwtTokenProvider jwtTokenProvider) {
         this.policyService = policyService;
         this.userService = userService;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @GetMapping
     public ResponseEntity<FirewallPolicy> deliverPolicy(@RequestParam String ip, @RequestParam String checksum) {
-        String category = determineCategoryFromChecksum(checksum);
+        String category = policyService.determineCategoryFromChecksum(checksum);
         String userId = userService.getUserIdByIp(ip);
         FirewallPolicy policy = policyService.getPolicyForUser(userId, category);
 
@@ -49,44 +53,49 @@ public class PoliciesController {
             return ResponseEntity.ok().body(null);
         }
 
-        String policyChecksum = calculateChecksum(policy);
+        String policyChecksum = policyService.calculateChecksum(policy);
         if (checksum.equals(policyChecksum)) {
             return ResponseEntity.ok().body(null); // Mesaj indicând că nu sunt necesare schimbări
         } else {
             return ResponseEntity.ok().body(policy);
         }
     }
+    @GetMapping("/active")
+    public ResponseEntity<FirewallPolicy> getActivePolicy(@RequestParam String ip, @RequestParam String checksum, HttpServletRequest request) {
+        String token = jwtTokenProvider.resolveToken(request);
+        logger.info("Token: " + token);
 
-    private String determineCategoryFromChecksum(String checksum) {
-        // Exemplu de determinare a categoriei pe baza checksum-ului
-        Map<String, String> checksumToCategory = new HashMap<>();
-        checksumToCategory.put("d41d8cd98f00b204e9800998ecf8427e", "LAB_POLICIES");
-        checksumToCategory.put("e99a18c428cb38d5f260853678922e03", "EXAM_POLICIES");
-        checksumToCategory.put("ab56b4d92b40713acc5af89985d4b786", "DEV_POLICIES");
-        checksumToCategory.put("4e07408562bedb8b60ce05c1decfe3ad", "DEFAULT_POLICIES");
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            String username = jwtTokenProvider.getUsername(token);
+            logger.info("Username from token: " + username);
 
-        return checksumToCategory.getOrDefault(checksum, "DEFAULT_POLICIES");
-    }
+//            String category = policyService.determineCategoryFromChecksum(checksum);
+//            logger.info("Determined category from checksum: " + category);
 
+            FirewallPolicy policy = null;
+            for (String category : policyService.getAllCategoryKeys()) {
+                policy = policyService.getPolicyForIp(ip, category);
+                if (policy != null && policy.isActive()) {
+                    break; // Am găsit o politică activă, ieșim din buclă
+                }
+            }
+            if (policy != null && policy.isActive()) {
+                String currentChecksum = policyService.calculateChecksum(policy);
+                logger.info("Current Checksum: " + currentChecksum);
+                logger.info("Client Checksum: " + checksum);
 
-    private String calculateChecksum(FirewallPolicy policy) {
-        return DigestUtils.md5DigestAsHex(policy.toString().getBytes());
-    }
+                if (!currentChecksum.equals(checksum)) {
+                    return ResponseEntity.ok(policy);
+                }
+                logger.info("Politica nu s-a schimbat. Returnez 204.");
+                return ResponseEntity.status(HttpStatus.NO_CONTENT).build(); // No new policy needed
 
-    @GetMapping("/{id}")
-    public ResponseEntity<FirewallPolicy> getPolicy(@PathVariable String id) {
-        FirewallPolicy policy = policyService.getPolicy(id);
-        return policy != null ? ResponseEntity.ok(policy) : ResponseEntity.notFound().build();
-    }
-
-    @PostMapping("/apply")
-    public ResponseEntity<String> applyPolicy(@RequestBody String policyId) {
-        FirewallPolicy policy = policyService.getPolicy(policyId);
-        if (policy != null) {
-            // Simularea trimiterii politicii către aplicația agent (Aplicatia 4)
-            return ResponseEntity.ok("Policy applied to agent");
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Policy not found");
+            }
+            logger.warn("No active policy found for IP: " + ip);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build(); // No active policy found
         }
+        logger.error("Invalid token for request from IP: " + ip);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // Invalid token
     }
+
 }
