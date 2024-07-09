@@ -1,6 +1,5 @@
 package com.project.policies.administration.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.project.policies.administration.object.FirewallPolicy;
 import com.project.policies.administration.services.FirewallPolicyService;
 import com.project.policies.administration.services.UserService;
@@ -10,13 +9,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.DigestUtils;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.*;
 
 @RestController
 @RequestMapping("/api/policies")
@@ -25,6 +23,7 @@ public class PoliciesController {
     private final UserService userService;
     private final JwtTokenProvider jwtTokenProvider;
     private static final Logger logger = LoggerFactory.getLogger(PoliciesController.class);
+
     @Autowired
     public PoliciesController(FirewallPolicyService policyService, UserService userService, JwtTokenProvider jwtTokenProvider) {
         this.policyService = policyService;
@@ -60,6 +59,7 @@ public class PoliciesController {
             return ResponseEntity.ok().body(policy);
         }
     }
+
     @GetMapping("/active")
     public ResponseEntity<FirewallPolicy> getActivePolicy(@RequestParam String ip, @RequestParam String checksum, HttpServletRequest request) {
         String token = jwtTokenProvider.resolveToken(request);
@@ -68,9 +68,6 @@ public class PoliciesController {
         if (token != null && jwtTokenProvider.validateToken(token)) {
             String username = jwtTokenProvider.getUsername(token);
             logger.info("Username from token: " + username);
-
-//            String category = policyService.determineCategoryFromChecksum(checksum);
-//            logger.info("Determined category from checksum: " + category);
 
             FirewallPolicy policy = null;
             for (String category : policyService.getAllCategoryKeys()) {

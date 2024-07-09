@@ -1,4 +1,4 @@
-package com.project.policies.administration.utils;
+package com.example.demo.security;
 
 import io.jsonwebtoken.*;
 import org.slf4j.Logger;
@@ -13,7 +13,9 @@ import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
+
     private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
+
     @Value("${security.jwt.token.secret-key}")
     private String secretKey;
 
@@ -28,7 +30,7 @@ public class JwtTokenProvider {
     public String createToken(String username) {
         Claims claims = Jwts.claims().setSubject(username);
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 3600000); // 1 ora
+        Date validity = new Date(now.getTime() + validityInMilliseconds);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -54,7 +56,7 @@ public class JwtTokenProvider {
         try {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             logger.error("Invalid JWT token", e);
             return false;
         }

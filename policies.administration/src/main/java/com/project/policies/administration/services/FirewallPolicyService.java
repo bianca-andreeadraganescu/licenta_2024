@@ -1,8 +1,6 @@
 package com.project.policies.administration.services;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.project.policies.administration.controller.PoliciesController;
 import com.project.policies.administration.object.FirewallPolicy;
 import org.slf4j.Logger;
@@ -98,10 +96,10 @@ public class FirewallPolicyService {
         }
         return allPolicies;
     }
+
     private FirewallPolicy deserializePolicyFromChecksum(String checksum) {
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            // Deserializăm JSON-ul din checksum
             String jsonPolicy = new String(MessageDigest.getInstance("MD5").digest(checksum.getBytes(StandardCharsets.UTF_8)));
             return objectMapper.readValue(jsonPolicy, FirewallPolicy.class);
         } catch (Exception e) {
@@ -123,9 +121,11 @@ public class FirewallPolicyService {
         }
         return "DEFAULT_POLICIES"; // Default if not found
     }
+
     public List<String> getAllCategoryKeys() {
         return Arrays.asList("LAB_POLICIES", "EXAM_POLICIES", "DEV_POLICIES", "DEFAULT_POLICIES");
     }
+
     private String getCategoryKey(String type) {
         switch (type) {
             case "LAB":
@@ -138,6 +138,7 @@ public class FirewallPolicyService {
                 return "DEFAULT_POLICIES";
         }
     }
+
     public String calculateChecksum(FirewallPolicy policy) {
         try {
             // Convert policy to JSON string

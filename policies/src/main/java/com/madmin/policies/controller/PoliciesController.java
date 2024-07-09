@@ -25,64 +25,32 @@ public class PoliciesController {
 
     @PostMapping
     public ResponseEntity<String> createPolicy(@RequestBody FirewallPolicy policy, HttpServletRequest request) {
-        String token = jwtTokenProvider.resolveToken(request);
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            String role = String.valueOf(jwtTokenProvider.getRoleFromToken(token));
-            if ("ADMIN".equals(role)) {
-                policyService.savePolicy(policy);
-                return ResponseEntity.status(HttpStatus.CREATED).body("Policy created successfully");
-            }
-        }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
+        // Nu mai verificăm token-ul JWT
+        policyService.savePolicy(policy);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Policy created successfully");
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> updatePolicy(@PathVariable String id, @RequestBody FirewallPolicy policy, HttpServletRequest request) {
-        String token = jwtTokenProvider.resolveToken(request);
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            String role = String.valueOf(jwtTokenProvider.getRoleFromToken(token));
-            if ("ADMIN".equals(role)) {
-                FirewallPolicy existingPolicy = policyService.getPolicy(id);
-                if (existingPolicy != null) {
-                    updateExistingPolicy(existingPolicy, policy);
-                    policyService.savePolicy(existingPolicy);
-                    return ResponseEntity.ok("Policy updated successfully");
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Policy not found");
-                }
-            }
+    public ResponseEntity<String> updatePolicy(@PathVariable String id, @RequestBody FirewallPolicy policy) {
+        FirewallPolicy existingPolicy = policyService.getPolicy(id);
+        if (existingPolicy != null) {
+            updateExistingPolicy(existingPolicy, policy);
+            policyService.savePolicy(existingPolicy);
+            return ResponseEntity.ok("Policy updated successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Policy not found");
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
-    }
-    private void updateExistingPolicy(FirewallPolicy existingPolicy, FirewallPolicy newPolicy) {
-        existingPolicy.setType(newPolicy.getType());
-        existingPolicy.setName(newPolicy.getName());
-        existingPolicy.setT_start(newPolicy.getT_start());
-        existingPolicy.setT_stop(newPolicy.getT_stop());
-        existingPolicy.setUsb(newPolicy.getUsb());
-        existingPolicy.setFw(newPolicy.getFw());
-        existingPolicy.setApps(newPolicy.getApps());
-        existingPolicy.setTarget_type(newPolicy.getTarget_type());
-        existingPolicy.setTarget_name(newPolicy.getTarget_name());
-        existingPolicy.setActive(newPolicy.isActive());
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deletePolicy(@PathVariable String id, HttpServletRequest request) {
-        String token = jwtTokenProvider.resolveToken(request);
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            String role = String.valueOf(jwtTokenProvider.getRoleFromToken(token));
-            if ("ADMIN".equals(role)) {
-                FirewallPolicy existingPolicy = policyService.getPolicy(id);
-                if (existingPolicy != null) {
-                    policyService.deletePolicy(id);
-                    return ResponseEntity.ok("Policy deleted successfully");
-                } else {
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Policy not found");
-                }
-            }
+    public ResponseEntity<String> deletePolicy(@PathVariable String id) {
+        FirewallPolicy existingPolicy = policyService.getPolicy(id);
+        if (existingPolicy != null) {
+            policyService.deletePolicy(id);
+            return ResponseEntity.ok("Policy deleted successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Policy not found");
         }
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
     }
 
     @GetMapping("/{id}")
@@ -95,4 +63,16 @@ public class PoliciesController {
         }
     }
 
+    private void updateExistingPolicy(FirewallPolicy existingPolicy, FirewallPolicy newPolicy) {
+        existingPolicy.setType(newPolicy.getType());
+        existingPolicy.setName(newPolicy.getName());
+        existingPolicy.setT_start(newPolicy.getT_start());
+        existingPolicy.setT_stop(newPolicy.getT_stop());
+        existingPolicy.setUsb(newPolicy.getUsb());
+        existingPolicy.setFw(newPolicy.getFw());
+        existingPolicy.setApps(newPolicy.getApps());
+        existingPolicy.setTarget_type(newPolicy.getTarget_type());
+        existingPolicy.setTarget_name(newPolicy.getTarget_name());
+        existingPolicy.setActive(newPolicy.isActive());
+    }
 }
